@@ -28,7 +28,7 @@ init_log_file()
 
 def get_geo_info(ip):
     try:
-        response = requests.get(f"https://ipinfo.io/{ip}/json", timeout=2)
+        response = requests.get(f"https://ipinfo.io/{ip}/json?token=c5b5e7f5cd1ae8", timeout=2)
         if response.status_code == 200:
             data = response.json()
             return data.get("city", ""), data.get("region", ""), data.get("country", "")
