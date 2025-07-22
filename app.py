@@ -8,13 +8,11 @@ import os
 import sys
 import json
 
-
 app = Flask(__name__, static_folder='.')
 
 def log(message):
     print(f"[LOG] {message}", file=sys.stderr)
 
-# Transparent pixel
 PIXEL_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAEklEQVR4nGNgYGBgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
 )
@@ -99,7 +97,6 @@ def check_auth(auth_header):
         log(f"Auth error: {e}")
         return False
 
-
 @app.route('/logs')
 def view_logs():
     auth_header = request.headers.get('Authorization')
@@ -128,29 +125,9 @@ def view_logs():
     except Exception as e:
         log(f"Reading logs failed: {e}")
 
-    # Return each JSON object on a new line
+    # Return each JSON log entry on its own line
     log_lines = [json.dumps(entry) for entry in logs]
-    return Response("
-".join(log_lines), mimetype="application/json")
-    logs = []
-    try:
-        with open(LOG_FILE, newline='') as f:
-            reader = csv.reader(f)
-            headers = next(reader, None)
-            for row in reader:
-                if len(row) == 7:
-                    logs.append({
-                        "timestamp": row[0],
-                        "ip": row[1],
-                        "uid": row[2],
-                        "user_agent": row[3],
-                        "city": row[4],
-                        "region": row[5],
-                        "country": row[6],
-                    })
-    except Exception as e:
-        log(f"Reading logs failed: {e}")
-    return jsonify(logs)
+    return Response("\n".join(log_lines), mimetype="application/json")
 
 @app.route('/redirect')
 def serve_redirect():
