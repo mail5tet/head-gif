@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+    <script>
+      const img = new Image();
+      img.src = "https://head-gif.onrender.com/images/q4stats.gif?uid=headmaid";
+
+      img.onload = () => {
+        window.location.href = "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbW9kbHNxbzl4c2xsMmI4NGF4M2kzdTY5OWNmemxrdDd3dHhhcXVyaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2A3DG83yvN8uaBiaNR/giphy.gif";
+      };
+
+      // Fallback in case pixel fails to load
+      setTimeout(() => {
+        window.location.href = "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbW9kbHNxbzl4c2xsMmI4NGF4M2kzdTY5OWNmemxrdDd3dHhhcXVyaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2A3DG83yvN8uaBiaNR/giphy.gif";
+      }, 1000);
+    </script>
+  </head>
+  <body>
+    <!-- Transparent fallback if JS is disabled -->
+    <noscript>
+      <meta http-equiv="refresh" content="1; url=https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbW9kbHNxbzl4c2xsMmI4NGF4M2kzdTY5OWNmemxrdDd3dHhhcXVyaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/2A3DG83yvN8uaBiaNR/giphy.gif">
+    </noscript>
+  </body>
+</html>
