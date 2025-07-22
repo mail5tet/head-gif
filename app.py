@@ -1,12 +1,12 @@
 
-from flask import Flask, request, make_response, jsonify, Response
+from flask import Flask, request, make_response, jsonify, Response, send_from_directory
 import base64
 import datetime
 import requests
 import csv
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 
 # 1x1 transparent PNG in base64
 PIXEL_BASE64 = (
@@ -85,6 +85,10 @@ def view_logs():
                 "country": row[6],
             })
     return jsonify(logs)
+
+@app.route('/redirect')
+def serve_redirect():
+    return send_from_directory('.', 'redirect.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
