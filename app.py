@@ -6,13 +6,13 @@ import requests
 import csv
 import os
 import sys
-import json
 
 app = Flask(__name__, static_folder='.')
 
 def log(message):
     print(f"[LOG] {message}", file=sys.stderr)
 
+# Transparent pixel
 PIXEL_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAEklEQVR4nGNgYGBgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
 )
@@ -25,7 +25,7 @@ def init_log_file():
     if not os.path.exists(LOG_FILE):
         with open(LOG_FILE, "w", newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["timestamp", "ip", "uid", "user_agent", "city", "region", "country", "vpn", "proxy", "tor", "hosting"])
+            writer.writerow(["timestamp", "ip", "uid", "user_agent", "city", "region", "country"])
         log("Initialized new log file")
 
 init_log_file()
@@ -57,20 +57,6 @@ def get_geo_info(ip):
         log(f"Geo lookup failed: {e}")
     return "", "", ""
 
-def is_vpn_ip(ip):
-    try:
-        api_key = os.getenv("IPQS_KEY", "YOUR_IPQS_KEY_HERE")
-        url = f"https://ipqualityscore.com/api/json/ip/{api_key}/{ip}"
-        response = requests.get(url, timeout=3)
-        if response.status_code == 200:
-            data = response.json()
-            return data.get("vpn", False), data.get("proxy", False), data.get("tor", False), data.get("hosting", False)
-        else:
-            log(f"VPN check failed: HTTP {response.status_code}")
-    except Exception as e:
-        log(f"VPN check error: {e}")
-    return False, False, False, False
-
 @app.route('/images/q4stats.gif')
 def tracking_pixel():
     uid = request.args.get("uid", "unknown")
@@ -82,12 +68,11 @@ def tracking_pixel():
     log(f"Pixel requested | UID: {uid} | IP: {ip}")
 
     city, region, country = get_geo_info(ip)
-    vpn, proxy, tor, hosting = is_vpn_ip(ip)
 
     try:
         with open(LOG_FILE, "a", newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([timestamp, ip, uid, user_agent, city, region, country, vpn, proxy, tor, hosting])
+            writer.writerow([timestamp, ip, uid, user_agent, city, region, country])
         log(f"Logged view for UID={uid}")
     except Exception as e:
         log(f"Failed to write log: {e}")
@@ -127,7 +112,7 @@ def view_logs():
             reader = csv.reader(f)
             headers = next(reader, None)
             for row in reader:
-                if len(row) == 11:
+                if len(row) == 7:
                     logs.append({
                         "timestamp": row[0],
                         "ip": row[1],
@@ -136,33 +121,14 @@ def view_logs():
                         "city": row[4],
                         "region": row[5],
                         "country": row[6],
-                        "vpn": row[7],
-                        "proxy": row[8],
-                        "tor": row[9],
-                        "hosting": row[10],
                     })
     except Exception as e:
         log(f"Reading logs failed: {e}")
+    return jsonify(logs)
 
-    log_lines = [json.dumps(entry) for entry in logs]
-    return Response("\n".join(log_lines), mimetype="application/json")
-
-@app.route('/giphy_carol-burnett-maid-over-it-3ohzdUuqOMFwxPyUvu664783anp2NDd2em42MXVweml2dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw3ohzdUuqOMFwxPyUvu76-gif')
-def serve_giphy_play():
+@app.route('/redirect')
+def serve_redirect():
     return send_from_directory('.', 'redirect.html')
-
-    @app.route('/giphy_SkyTV-homer-simpson-simpsons-hiding-2A3DG83664783anp2NDd2em42MXVwjfh6784GHGFjkfdkfheml2dCZlcD12MV9pbnRlcm5hbF9yvN8uaBiaNR-gif')
-def serve_giphy_play():
-    return send_from_directory('.', 'redirect2.html')
-
-    @app.route('/pudgypenguins-fire-burning-on-ZhS9PL4HQO6o9s9G83664783anp2NDd2em42MXVwe64783anhjfHlksdjf5682dFG099jjjhrGGF647893456GFGgghjp2NDd2e6ce-gif')
-def serve_giphy_play():
-    return send_from_directory('.', 'redirect3.html')
-
-    @app.route('/star-wars-han-solo-rHR8qPw3ohzdUuqUvu664783anpOMFwx1mC5m42MXVweml8377759fhhpoebfghjk8906GHghSqzjbcn543GHdkbxbHG2dCZlcD1O6o9s9G836V3G-gif')
-def serve_giphy_play():
-    return send_from_directory('.', 'redirect4.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
