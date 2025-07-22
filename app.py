@@ -5,10 +5,14 @@ import datetime
 import requests
 import csv
 import os
+import sys
 
 app = Flask(__name__, static_folder='.')
 
-# 1x1 transparent PNG in base64
+def log(message):
+    print(f"[LOG] {message}", file=sys.stderr)
+
+# Transparent pixel
 PIXEL_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAEklEQVR4nGNgYGBgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
 )
@@ -16,32 +20,42 @@ PIXEL_BASE64 = (
 LOG_FILE = "pixel_log.csv"
 USERNAME = "admin"
 PASSWORD = "supersecret"
+IPINFO_TOKEN = "YOUR_API_KEY_HERE"  # Replace with your token
 
-# Ensure log file exists and has headers
 def init_log_file():
     if not os.path.exists(LOG_FILE):
         with open(LOG_FILE, "w", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(["timestamp", "ip", "uid", "user_agent", "city", "region", "country"])
+        log("Initialized new log file")
 
 init_log_file()
 
 def get_geo_info(ip):
     try:
-        response = requests.get(f"https://ipinfo.io/{ip}/json?token=c5b5e7f5cd1ae8", timeout=2)
+        response = requests.get(f"https://ipinfo.io/{ip}/json?token={c5b5e7f5cd1ae8}", timeout=3)
         if response.status_code == 200:
             data = response.json()
-            return data.get("city", ""), data.get("region", ""), data.get("country", "")
+            log(f"GeoIP raw data: {data}")
+            city = data.get("city", "")
+            region = data.get("region", "")
+            country = data.get("country", "")
+            return city, region, country
+        else:
+            log(f"GeoIP request failed with status {response.status_code}")
     except Exception as e:
-        print(f"Geo lookup failed: {e}")
+        log(f"Geo lookup failed: {e}")
     return "", "", ""
 
 @app.route('/images/q4stats.gif')
 def tracking_pixel():
     uid = request.args.get("uid", "unknown")
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    ip = ip.split(',')[0].strip()  # Use first IP in chain
     user_agent = request.headers.get("User-Agent", "unknown")
     timestamp = datetime.datetime.utcnow().isoformat()
+
+    log(f"Received pixel for UID={uid}, IP={ip}")
 
     city, region, country = get_geo_info(ip)
 
@@ -49,8 +63,9 @@ def tracking_pixel():
         with open(LOG_FILE, "a", newline='') as f:
             writer = csv.writer(f)
             writer.writerow([timestamp, ip, uid, user_agent, city, region, country])
+        log(f"Logged view for UID={uid}")
     except Exception as e:
-        print(f"Logging failed: {e}")
+        log(f"Failed to write log: {e}")
 
     pixel_data = base64.b64decode(PIXEL_BASE64)
     response = make_response(pixel_data)
@@ -68,7 +83,8 @@ def check_auth(auth_header):
         decoded = base64.b64decode(credentials).decode('utf-8')
         username, password = decoded.split(':')
         return username == USERNAME and password == PASSWORD
-    except:
+    except Exception as e:
+        log(f"Auth check error: {e}")
         return False
 
 @app.route('/logs')
@@ -97,7 +113,7 @@ def view_logs():
                         "country": row[6],
                     })
     except Exception as e:
-        print(f"Log read failed: {e}")
+        log(f"Reading logs failed: {e}")
     return jsonify(logs)
 
 @app.route('/redirect')
