@@ -17,6 +17,12 @@ LOG_FILE = "pixel_log.csv"
 USERNAME = "admin"
 PASSWORD = "supersecret"
 
+# Ensure log file exists
+if not os.path.exists(LOG_FILE):
+    with open(LOG_FILE, "w", newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "ip", "uid", "user_agent", "city", "region", "country"])
+
 def get_geo_info(ip):
     try:
         response = requests.get(f"https://ipinfo.io/{ip}/json")
@@ -68,22 +74,22 @@ def view_logs():
             {'WWW-Authenticate': 'Basic realm="Login Required"'}
         )
 
-    if not os.path.exists(LOG_FILE):
-        return jsonify([])
-
     logs = []
-    with open(LOG_FILE, newline='') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            logs.append({
-                "timestamp": row[0],
-                "ip": row[1],
-                "uid": row[2],
-                "user_agent": row[3],
-                "city": row[4],
-                "region": row[5],
-                "country": row[6],
-            })
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, newline='') as f:
+            reader = csv.reader(f)
+            headers = next(reader, None)
+            for row in reader:
+                if len(row) == 7:
+                    logs.append({
+                        "timestamp": row[0],
+                        "ip": row[1],
+                        "uid": row[2],
+                        "user_agent": row[3],
+                        "city": row[4],
+                        "region": row[5],
+                        "country": row[6],
+                    })
     return jsonify(logs)
 
 @app.route('/redirect')
