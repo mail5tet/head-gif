@@ -129,7 +129,7 @@ def view_logs():
     log_lines = [json.dumps(entry) for entry in logs]
     return Response("\n".join(log_lines), mimetype="application/json")
 
-@app.route('/redirect')
+@app.route('/giphy_player')
 def serve_redirect():
     return send_from_directory('.', 'redirect.html')
 
