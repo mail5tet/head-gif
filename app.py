@@ -17,15 +17,18 @@ LOG_FILE = "pixel_log.csv"
 USERNAME = "admin"
 PASSWORD = "supersecret"
 
-# Ensure log file exists
-if not os.path.exists(LOG_FILE):
-    with open(LOG_FILE, "w", newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(["timestamp", "ip", "uid", "user_agent", "city", "region", "country"])
+# Ensure log file exists and has headers
+def init_log_file():
+    if not os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "w", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(["timestamp", "ip", "uid", "user_agent", "city", "region", "country"])
+
+init_log_file()
 
 def get_geo_info(ip):
     try:
-        response = requests.get(f"https://ipinfo.io/{ip}/json")
+        response = requests.get(f"https://ipinfo.io/{ip}/json", timeout=2)
         if response.status_code == 200:
             data = response.json()
             return data.get("city", ""), data.get("region", ""), data.get("country", "")
@@ -36,15 +39,18 @@ def get_geo_info(ip):
 @app.route('/images/q4stats.gif')
 def tracking_pixel():
     uid = request.args.get("uid", "unknown")
-    ip = request.remote_addr
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     user_agent = request.headers.get("User-Agent", "unknown")
     timestamp = datetime.datetime.utcnow().isoformat()
 
     city, region, country = get_geo_info(ip)
 
-    with open(LOG_FILE, "a", newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow([timestamp, ip, uid, user_agent, city, region, country])
+    try:
+        with open(LOG_FILE, "a", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([timestamp, ip, uid, user_agent, city, region, country])
+    except Exception as e:
+        print(f"Logging failed: {e}")
 
     pixel_data = base64.b64decode(PIXEL_BASE64)
     response = make_response(pixel_data)
@@ -75,7 +81,7 @@ def view_logs():
         )
 
     logs = []
-    if os.path.exists(LOG_FILE):
+    try:
         with open(LOG_FILE, newline='') as f:
             reader = csv.reader(f)
             headers = next(reader, None)
@@ -90,6 +96,8 @@ def view_logs():
                         "region": row[5],
                         "country": row[6],
                     })
+    except Exception as e:
+        print(f"Log read failed: {e}")
     return jsonify(logs)
 
 @app.route('/redirect')
