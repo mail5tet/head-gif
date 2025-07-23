@@ -1,5 +1,5 @@
 
-from flask import Flask, request, make_response, jsonify, Response, send_from_directory
+from flask import app, request, make_response, jsonify, Response, send_from_directory
 import base64
 import datetime
 import requests
