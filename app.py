@@ -1,5 +1,5 @@
 
-from flask import app, request, make_response, jsonify, Response, send_from_directory
+from flask import Flask, request, make_response, jsonify, Response, send_from_directory
 import base64
 import datetime
 import requests
@@ -8,7 +8,7 @@ import os
 import sys
 import json
 
-app = app(__name__, static_folder='.')
+app = Flask(__name__, static_folder='.')
 
 @app.route('/giphy_carol-burnett-maid-over-it-3ohzdUuqOMFwxPyUvu664783anp2NDd2em42MXVweml2dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw3ohzdUuqOMFwxPyUvu76-gif')
 def redirect():
